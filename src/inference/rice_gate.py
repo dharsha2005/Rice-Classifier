@@ -114,6 +114,26 @@ def extract_gate_features(image_input: Union[Image.Image, np.ndarray, str, Path]
     return features.astype(np.float32, copy=False)
 
 
+def _check_rice_morphology(processed: dict[str, Any]) -> str | None:
+    """Validate that segmented object satisfies biological grain geometry limits."""
+    morphology = processed.get("morphology")
+    if morphology is None:
+        return "No valid grain contour detected."
+
+    solidity = float(morphology.solidity)
+    extent = float(morphology.extent)
+    aspect_ratio = float(morphology.aspect_ratio)
+
+    # Genuine rice grains have high solidity (> 0.55), reasonable aspect ratio, and compactness
+    if solidity < 0.55:
+        return f"Object rejected: irregular shape (solidity {solidity:.2f} is too low for rice)."
+    if extent < 0.35:
+        return f"Object rejected: shape compactness (extent {extent:.2f}) does not match rice grains."
+    if aspect_ratio < 0.20 or aspect_ratio > 2.50:
+        return f"Object rejected: aspect ratio {aspect_ratio:.2f} is outside the rice grain range (0.20 - 2.50)."
+    return None
+
+
 def validate_rice_or_reject(
     image_input: Union[Image.Image, np.ndarray, str, Path],
     *,
@@ -134,27 +154,71 @@ def validate_rice_or_reject(
             acceptance_threshold=acceptance_threshold or DEFAULT_ACCEPTANCE_THRESHOLD,
         )
 
+    # Stage 1: Preprocessing & morphological grain validation
+    try:
+        processed = preprocess_for_inference(image_input)
+    except Exception as exc:
+        return RiceGateResult(
+            False,
+            f"Image rejected: not a valid rice grain ({exc}).",
+            rice_probability=0.0,
+            acceptance_threshold=acceptance_threshold or DEFAULT_ACCEPTANCE_THRESHOLD,
+            validator_available=True,
+        )
+
+    morph_rejection = _check_rice_morphology(processed)
+    if morph_rejection is not None:
+        return RiceGateResult(
+            False,
+            morph_rejection,
+            rice_probability=0.0,
+            acceptance_threshold=acceptance_threshold or DEFAULT_ACCEPTANCE_THRESHOLD,
+            validator_available=True,
+        )
+
+    # Stage 2: Deep feature extraction & trained binary classifier
     metadata = load_gate_metadata()
-    threshold = float(
-        acceptance_threshold if acceptance_threshold is not None else metadata.get("acceptance_threshold", DEFAULT_ACCEPTANCE_THRESHOLD)
-    )
+    # Default to a strict threshold (0.75) to strictly block non-rice items
+    default_thresh = max(0.75, float(metadata.get("acceptance_threshold", DEFAULT_ACCEPTANCE_THRESHOLD)))
+    threshold = float(acceptance_threshold if acceptance_threshold is not None else default_thresh)
+
     scaler, classifier = load_gate_bundle()
     model = _GateModelAdapter(scaler, classifier)
-    features = extract_gate_features(image_input)
-    probabilities = model.predict_proba(features)[0]
+
+    try:
+        standardized = processed["standardized_grain"]
+        import torch
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        backbone = load_efficientnet().to(device)
+        tensor = image_to_tensor(standardized, image_size=224).unsqueeze(0).to(device)
+        with torch.inference_mode():
+            features = backbone(tensor).cpu().numpy().reshape(1, -1).astype(np.float32, copy=False)
+        probabilities = model.predict_proba(features)[0]
+    except Exception as exc:
+        return RiceGateResult(
+            False,
+            f"Feature extraction failed: {exc}",
+            rice_probability=0.0,
+            acceptance_threshold=threshold,
+            validator_available=True,
+        )
+
     classes = [int(value) for value in getattr(model, "classes_", [0, 1])]
     if 1 not in classes:
         raise ValueError("Rice gate model must use class label 1 for rice.")
     rice_index = classes.index(1)
     rice_probability = float(probabilities[rice_index])
+
     if rice_probability < threshold:
         return RiceGateResult(
             False,
-            f"Image rejected: rice confidence {rice_probability * 100:.1f}% is below threshold {threshold * 100:.1f}%.",
+            f"Image rejected: rice confidence {rice_probability * 100:.1f}% is below required {threshold * 100:.1f}%.",
             rice_probability=rice_probability,
             acceptance_threshold=threshold,
             validator_available=True,
         )
+
     return RiceGateResult(
         True,
         "Rice image accepted by binary validator.",

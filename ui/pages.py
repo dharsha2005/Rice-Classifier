@@ -360,40 +360,17 @@ def reports() -> None:
 def webcam() -> None:
     page_heading("Webcam", "Capture a grain sample and validate it before running rice-defect classification.")
     
-    col_status, col_toggle = st.columns([3, 2])
-    with col_status:
-        if gate_model_available():
-            st.success("Rice/Non-Rice Validator: **Active**")
-        else:
-            st.warning(SETUP_MESSAGE)
-    with col_toggle:
-        bypass_gate = st.toggle(
-            "Direct Mode (Bypass Gate)",
-            value=False,
-            help="Bypass binary rice verification to test direct inference on any captured frame.",
-        )
+    if gate_model_available():
+        st.success("Rice/Non-Rice Strict Validator: **Active (Enforced)**")
+    else:
+        st.warning(SETUP_MESSAGE)
 
     camera = st.camera_input("Capture rice image", key="webcam_page_camera")
     if camera is None:
-        st.info("Position a rice grain in front of your camera and snap a photo.")
+        st.info("Position a single rice grain in front of your camera against a contrasting background and snap a photo.")
         return
 
     image = Image.open(camera).convert("RGB")
-
-    # If gate bypass is active, skip binary gate check
-    if bypass_gate:
-        st.info("Direct inspection mode active (gate bypassed).")
-        st.image(image, caption="Captured frame", width="stretch")
-        if st.button("Analyze Camera Rice", type="primary", key="webcam_analyze"):
-            try:
-                result = predict_rice(image)
-                record_prediction(result, "camera_capture.jpg", "camera")
-                st.session_state.explanation = None
-                render_result(result, image, "webcam")
-            except Exception as exc:
-                st.error(f"Analysis failed: {exc}")
-                st.caption("Ensure a single rice grain is clearly visible against a contrasting background.")
-        return
 
     gate = validate_rice_image(image)
     if not gate.validator_available:
@@ -401,9 +378,9 @@ def webcam() -> None:
     elif not gate.is_valid:
         st.error(f"❌ {gate.reason}")
         st.warning(
-            "💡 **Rice Grain Not Detected:** The camera detected a person, background, or non-grain object. "
-            "To grade rice, hold a rice grain close to the camera against a contrasting/dark background, "
-            "or switch on **'Direct Mode (Bypass Gate)'** above to test directly."
+            "💡 **Rice Grain Not Detected:** The camera detected a person, background, hand, or non-rice object. "
+            "Only genuine rice grains are accepted. "
+            "Please hold a single rice grain close to the camera against a contrasting/dark background."
         )
     else:
         st.success(f"✅ Rice grain detected (Rice confidence: {gate.rice_probability:.1%}). Ready for grading.")

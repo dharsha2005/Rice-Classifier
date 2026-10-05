@@ -182,6 +182,7 @@ def preprocess_for_inference(image_input: Union[str, Path, Image.Image, np.ndarr
         "original_bgr": result.original_bgr,
         "binary_mask": result.binary_mask,
         "contour": result.contour,
+        "morphology": getattr(result, "morphology", None),
         "segmented_full": result.segmented_full,
         "segmented_cropped": result.segmented_cropped,
         "standardized_grain": standardized,
