@@ -62,17 +62,16 @@ def dashboard() -> None:
     cards[2].metric("Average confidence", f"{monitor.average_confidence:.2%}")
     cards[3].metric("Model status", "Ready" if (ROOT / "results/models/hybrid_xgboost/hybrid_xgboost_model.joblib").exists() else "Missing")
     st.markdown("#### Quick actions")
-    actions = st.columns(5)
+    actions = st.columns(4)
     actions[0].page_link("Analyze Rice", label="Analyze Rice", icon=":material/search:")
-    actions[1].page_link("Multi-Grain Inspection", label="Bulk Inspection", icon=":material/grain:")
-    actions[2].page_link("Batch Analysis", label="Batch Analysis", icon=":material/grid_view:")
-    actions[3].page_link("Review Queue", label="Review Queue", icon=":material/rule:")
-    actions[4].page_link("Reports", label="Reports", icon=":material/description:")
+    actions[1].page_link("Batch Analysis", label="Batch Analysis", icon=":material/grid_view:")
+    actions[2].page_link("Review Queue", label="Review Queue", icon=":material/rule:")
+    actions[3].page_link("Reports", label="Reports", icon=":material/description:")
     st.markdown("#### Recent predictions")
     if history:
         st.dataframe(pd.DataFrame(history[:8]), width="stretch", hide_index=True)
     else:
-        st.info("No predictions yet. Start with Analyze Rice or Bulk Inspection.")
+        st.info("No predictions yet. Start with Analyze Rice.")
 
 
 def analyze_rice() -> None:
