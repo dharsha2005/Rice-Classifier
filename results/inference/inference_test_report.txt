@@ -1,0 +1,40 @@
+RICE INFERENCE TEST REPORT
+========================
+
+Purpose:
+This validation uses existing project test images only to confirm that the saved final hybrid model,
+scaler, preprocessing logic, handcrafted features, and EfficientNet-B0 inference path work together.
+No retraining or tuning was performed.
+
+Model artifact:
+- results/models/hybrid_xgboost/hybrid_xgboost_model.joblib
+- results/models/hybrid_xgboost/hybrid_scaler.joblib
+
+Feature structure verified:
+- Handcrafted features: 62
+- EfficientNet-B0 features: 1280
+- Fused feature vector: 1342
+
+Validation set used:
+- 5 existing test images from datasets/rice_test.txt
+
+Results:
+
+image_path,predicted_class,confidence,actual_class,inference_succeeded,inference_time_seconds,feature_vector_length,handcrafted_feature_count,deep_feature_count
+rice\test\5_BN\Grainset_rice_2021-07-31-17-57-12_5_p600s.png,5_BN,0.9785985946655273,5_BN,True,0.39495180000085384,1342,62,1280
+rice\test\5_BN\Grainset_rice_2022-05-11-08-05-59_1_p600s.png,5_BN,0.9934192299842834,5_BN,True,0.05997290002414957,1342,62,1280
+rice\test\5_BN\Grainset_rice_2021-10-24-13-15-16_0_p600s.png,5_BN,0.9833282232284546,5_BN,True,0.04700650001177564,1342,62,1280
+rice\test\5_BN\Grainset_rice_2020-04-02-20-21-03_3_p600s.png,5_BN,0.9553284049034119,5_BN,True,0.05029929999727756,1342,62,1280
+rice\test\5_BN\Grainset_rice_2021-08-28-23-06-57_4_p600s.png,5_BN,0.9503406882286072,5_BN,True,0.05751459999009967,1342,62,1280
+
+Summary:
+- Test images processed: 5
+- Successful predictions: 5
+- Failed predictions: 0
+- Average inference time: 0.12194902000483125 seconds
+- Verified feature dimensions: 62, 1280, 1342
+
+Important notes:
+- The model and scaler were loaded from previously saved artifacts and were not retrained.
+- The inference pipeline reuses the project preprocessing logic and the trained feature ordering.
+- This test validates technical pipeline functionality only; it does not change the recorded research results.

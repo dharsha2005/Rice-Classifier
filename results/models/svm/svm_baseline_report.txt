@@ -1,0 +1,100 @@
+================================================================================
+  BASELINE SVM MODEL EVALUATION REPORT
+  Project: Rice Quality and Defect Assessment using Hybrid ML & Deep Feature Fusion
+  Date   : 2026-09-15 14:32:24
+================================================================================
+
+1. RESEARCH ROLE & MODEL CONTEXT
+  - Model Type: Conventional Support Vector Classifier (RBF Kernel)
+  - Purpose   : Establish a strong classical ML baseline using 62 handcrafted features.
+  - Note      : This is NOT the proposed final model. It establishes the benchmark standard
+                against which Handcrafted+XGBoost, EfficientNet-B0, and the Hybrid Fusion
+                classifier will be measured.
+
+2. DATASET SPLITS & FEATURE COMPOSITION
+  - Training Set Size       : 24,767 images
+  - Validation Set Size     : 3,095 images (used exclusively for hyperparameter tuning)
+  - Test Set Size           : 3,100 images (evaluated exactly once on final model)
+  - Total Features          : 62 handcrafted features
+    * Shape Features        : 14 features
+    * GLCM Texture Features : 12 features
+    * Colour Features       : 36 features (RGB, HSV, LAB)
+
+3. PREPROCESSING & LEAKAGE PREVENTION
+  - Feature Scaling         : StandardScaler (zero mean, unit variance)
+  - Pipeline Implementation : sklearn.pipeline.Pipeline([('scaler', StandardScaler()), ('svm', SVC())])
+  - Leakage Guard           : StandardScaler was fit STRICTLY on training data.
+
+4. HYPERPARAMETER TUNING & VALIDATION PERFORMANCE
+  - Hyperparameters Tested  : C in [0.1, 1.0, 5.0, 10.0, 50.0], gamma in ['0.01', '0.05', '0.1', 'auto', 'scale'], class_weight in ['None', 'balanced']
+  - Total Configurations    : 50 evaluated
+  - Optimal Hyperparameters : C = 50.0, gamma = 'scale', class_weight = None
+  - Validation Accuracy     : 94.96%
+  - Validation Macro F1     : 0.8853
+  - Validation Weighted F1  : 0.9491
+
+5. FINAL TEST SET PERFORMANCE (Untouched Evaluation)
+  - Test Accuracy           : 91.16%
+  - Macro Precision         : 82.06%
+  - Macro Recall            : 88.60%
+  - Macro F1-Score          : 0.8494 (84.94%)
+  - Weighted F1-Score       : 0.9161 (91.61%)
+  - Total Inference Time    : 1.374 s (0.44 ms / sample)
+
+6. PER-CLASS CLASSIFICATION BREAKDOWN (Test Set)
+  --------------------------------------------------------------------------
+  Class ID  Class Name   Precision    Recall       F1-Score     Support 
+  --------------------------------------------------------------------------
+  0         0_NOR         99.14%      92.65%      95.79%     2000    
+  1         1_F&S         78.92%      87.33%      82.91%     150     
+  2         2_SD          57.35%      80.67%      67.04%     150     
+  3         3_MY          69.94%      80.67%      74.92%     150     
+  4         4_AP          78.11%      88.00%      82.76%     150     
+  5         5_BN          92.57%      91.33%      91.95%     150     
+  6         6_UN          82.93%      90.67%      86.62%     150     
+  7         7_IM          97.50%      97.50%      97.50%     200     
+  --------------------------------------------------------------------------
+
+7. FULL CLASSIFICATION REPORT
+              precision    recall  f1-score   support
+
+       0_NOR     0.9914    0.9265    0.9579      2000
+       1_F&S     0.7892    0.8733    0.8291       150
+        2_SD     0.5735    0.8067    0.6704       150
+        3_MY     0.6994    0.8067    0.7492       150
+        4_AP     0.7811    0.8800    0.8276       150
+        5_BN     0.9257    0.9133    0.9195       150
+        6_UN     0.8293    0.9067    0.8662       150
+        7_IM     0.9750    0.9750    0.9750       200
+
+    accuracy                         0.9116      3100
+   macro avg     0.8206    0.8860    0.8494      3100
+weighted avg     0.9250    0.9116    0.9161      3100
+
+
+8. CONFUSION MATRIX ANALYSIS & OBSERVATIONS
+  Confusion matrix rows are true classes and columns are predicted classes:
+  Predicted:    0_NOR    1_F&S     2_SD     3_MY     4_AP     5_BN     6_UN     7_IM
+  True 0_NOR       1853        2       64       31       32        3       15        0
+  True 1_F&S          1      131       12        4        0        0        2        0
+  True 2_SD           0       26      121        1        0        0        2        0
+  True 3_MY           5        4       12      121        2        2        4        0
+  True 4_AP           8        2        1        3      132        0        4        0
+  True 5_BN           1        0        0        6        0      137        1        5
+  True 6_UN           1        1        1        5        2        4      136        0
+  True 7_IM           0        0        0        2        1        2        0      195
+  - Class support and performance should be interpreted together; the table above reports support for each class.
+  - The validation-selected C, gamma, and class_weight configuration is used for the final test evaluation.
+  - This benchmark does not make claims about the proposed/final model; later models must be compared against it.
+
+9. SAVED ARTIFACTS
+  - Serialized Pipeline Model : C:\Rice classifier final project\results\models\svm\svm_baseline.joblib
+  - Visualizations Directory  : C:\Rice classifier final project\results\models\svm
+      * confusion_matrix.png
+      * normalized_confusion_matrix.png
+      * per_class_metrics.png
+      * model_performance_summary.png
+
+================================================================================
+  END OF REPORT
+================================================================================

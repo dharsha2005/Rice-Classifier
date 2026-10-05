@@ -1,0 +1,4 @@
+Model,Feature Type,Accuracy,Macro F1,Weighted F1,Accuracy Change vs SVM,Macro F1 Change vs SVM
+SVM + Handcrafted Features,62 handcrafted,0.9116,0.8494,0.9161,0.0,0.0
+XGBoost + EfficientNet Features,1280 EfficientNet-B0 deep,0.9065,0.8399,0.9099,-0.005099999999999993,-0.009500000000000064
+XGBoost + Hybrid Features,1342 fused,0.9209677419354839,0.8660282229538041,0.9244098464642047,0.009367741935483953,0.01662822295380406

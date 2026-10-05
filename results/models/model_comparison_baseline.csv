@@ -1,0 +1,3 @@
+Model,Feature Type,Accuracy,Macro F1,Weighted F1
+SVM,62 handcrafted features,0.9116,0.8494,0.9161
+XGBoost,EfficientNet-B0 deep features,0.9064516129032258,0.8399331671173571,0.9098666023249984

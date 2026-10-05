@@ -1,0 +1,149 @@
+====================================================================
+  GrainSet Rice Dataset Inspection Report
+  Generated : 2026-09-15 13:41:09
+====================================================================
+
+DATASET PATHS
+  Split files directory : C:\Rice classifier final project\datasets
+  Rice image root       : C:\Rice classifier final project\rice
+  Image root exists     : True
+
+SPLIT FILES
+  train        -> rice_train.txt  [FOUND]
+  val          -> rice_val.txt  [FOUND]
+  test         -> rice_test.txt  [FOUND]
+  train_bal    -> rice_train_bal.txt  [FOUND]
+
+OVERVIEW
+  Number of classes     : 8
+  Total train images    : 24,767
+  Total val images      : 3,095
+  Total test images     : 3,100
+  Total (train+val+test): 30,962
+  Balanced train subset : 9,528  (sub-sample of train, for class balance)
+
+CLASS LABELS  (from data; abbreviations are NOT interpreted)
+  ID     Folder Name          Note
+  --     -----------          ----
+  0      0_NOR                (raw label as found in split files)
+  1      1_F&S                (raw label as found in split files)
+  2      2_SD                 (raw label as found in split files)
+  3      3_MY                 (raw label as found in split files)
+  4      4_AP                 (raw label as found in split files)
+  5      5_BN                 (raw label as found in split files)
+  6      6_UN                 (raw label as found in split files)
+  7      7_IM                 (raw label as found in split files)
+
+CLASS DISTRIBUTION PER SPLIT
+
+  [TRAIN]  Total: 24,767
+  ID     Folder             Count  Bar
+  --     ------             -----  ---
+  0      0_NOR             15,980  [###################...........] 15,980  (64.5%)
+  1      1_F&S              1,191  [#.............................]  1,191  (4.8%)
+  2      2_SD               1,194  [#.............................]  1,194  (4.8%)
+  3      3_MY               1,223  [#.............................]  1,223  (4.9%)
+  4      4_AP               1,208  [#.............................]  1,208  (4.9%)
+  5      5_BN               1,198  [#.............................]  1,198  (4.8%)
+  6      6_UN               1,185  [#.............................]  1,185  (4.8%)
+  7      7_IM               1,588  [#.............................]  1,588  (6.4%)
+
+  [VAL]  Total: 3,095
+  ID     Folder             Count  Bar
+  --     ------             -----  ---
+  0      0_NOR              2,020  [###################...........]  2,020  (65.3%)
+  1      1_F&S                145  [#.............................]    145  (4.7%)
+  2      2_SD                 156  [#.............................]    156  (5.0%)
+  3      3_MY                 127  [#.............................]    127  (4.1%)
+  4      4_AP                 142  [#.............................]    142  (4.6%)
+  5      5_BN                 143  [#.............................]    143  (4.6%)
+  6      6_UN                 150  [#.............................]    150  (4.8%)
+  7      7_IM                 212  [##............................]    212  (6.8%)
+
+  [TEST]  Total: 3,100
+  ID     Folder             Count  Bar
+  --     ------             -----  ---
+  0      0_NOR              2,000  [###################...........]  2,000  (64.5%)
+  1      1_F&S                150  [#.............................]    150  (4.8%)
+  2      2_SD                 150  [#.............................]    150  (4.8%)
+  3      3_MY                 150  [#.............................]    150  (4.8%)
+  4      4_AP                 150  [#.............................]    150  (4.8%)
+  5      5_BN                 150  [#.............................]    150  (4.8%)
+  6      6_UN                 150  [#.............................]    150  (4.8%)
+  7      7_IM                 200  [#.............................]    200  (6.5%)
+
+  [TRAIN_BAL]  Total: 9,528
+  ID     Folder             Count  Bar
+  --     ------             -----  ---
+  0      0_NOR              1,192  [###...........................]  1,192  (12.5%)
+  1      1_F&S              1,191  [###...........................]  1,191  (12.5%)
+  2      2_SD               1,192  [###...........................]  1,192  (12.5%)
+  3      3_MY               1,192  [###...........................]  1,192  (12.5%)
+  4      4_AP               1,192  [###...........................]  1,192  (12.5%)
+  5      5_BN               1,192  [###...........................]  1,192  (12.5%)
+  6      6_UN               1,185  [###...........................]  1,185  (12.4%)
+  7      7_IM               1,192  [###...........................]  1,192  (12.5%)
+
+FILE EXISTENCE CHECK
+  Total entries checked : 40,490
+  Files found on disk   : 40,490
+  Missing files         : 0
+
+IMAGE VALIDITY CHECK
+  Invalid / corrupt images : 0
+
+DUPLICATE DETECTION
+  Total unique filenames       : 30,962
+  Filenames appearing > 1 time : 9,528
+  Content-identical file pairs : 9,528
+
+  First 10 duplicate filenames:
+    Grainset_rice_2020-11-10-18-37-05_3_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2020-11-10-18-37-05_3_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2020-11-10-18-37-05_3_p600s.png
+    Grainset_rice_2020-11-06-15-34-58_2_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2020-11-06-15-34-58_2_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2020-11-06-15-34-58_2_p600s.png
+    Grainset_rice_2020-08-21-15-41-54_2_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2020-08-21-15-41-54_2_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2020-08-21-15-41-54_2_p600s.png
+    Grainset_rice_2021-07-07-13-20-56_2_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2021-07-07-13-20-56_2_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2021-07-07-13-20-56_2_p600s.png
+    Grainset_rice_2021-06-07-19-46-24_2_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2021-06-07-19-46-24_2_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2021-06-07-19-46-24_2_p600s.png
+    Grainset_rice_2022-02-23-18-51-02_3_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2022-02-23-18-51-02_3_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2022-02-23-18-51-02_3_p600s.png
+    Grainset_rice_2020-05-07-16-25-27_2_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2020-05-07-16-25-27_2_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2020-05-07-16-25-27_2_p600s.png
+    Grainset_rice_2021-12-17-08-48-52_4_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2021-12-17-08-48-52_4_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2021-12-17-08-48-52_4_p600s.png
+    Grainset_rice_2021-04-22-11-09-49_1_p600s.png
+      -> [train] train/0_NOR/Grainset_rice_2021-04-22-11-09-49_1_p600s.png
+      -> [train_bal] train/0_NOR/Grainset_rice_2021-04-22-11-09-49_1_p600s.png
+    Grainset_rice_2021-09-11-23-13-26_7_p600s.png
+      -> [train] train/3_MY/Grainset_rice_2021-09-11-23-13-26_7_p600s.png
+      -> [train_bal] train/3_MY/Grainset_rice_2021-09-11-23-13-26_7_p600s.png
+
+TRAIN / VAL / TEST OVERLAP
+  Train n Val  : 0 overlapping filenames
+  Train n Test : 0 overlapping filenames
+  Val   n Test : 0 overlapping filenames
+  All three    : 0 overlapping filenames
+
+  OK: No filename overlaps between train / val / test splits.
+
+ISSUES SUMMARY
+  * INFO    : 9528 filenames appear in >1 location.
+
+NEXT STEPS
+  1. Review any missing or invalid files above.
+  2. Proceed to preprocessing (Stage 2).
+
+====================================================================
+  End of Report
+====================================================================

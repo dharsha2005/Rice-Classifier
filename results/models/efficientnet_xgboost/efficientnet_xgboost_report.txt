@@ -1,0 +1,79 @@
+EFFICIENTNET-B0 DEEP FEATURES + XGBOOST REPORT
+
+Research role: controlled classifier experiment using EfficientNet-B0 deep features only.
+No handcrafted features, SVM, feature fusion, or final-model claim is included.
+
+Dataset sizes: train=24767, validation=3095, test=3100
+Deep feature dimension: 1280
+Number of classes: 8
+
+Class distribution:
+  train: 0_NOR=15980, 1_F&S=1191, 2_SD=1194, 3_MY=1223, 4_AP=1208, 5_BN=1198, 6_UN=1185, 7_IM=1588
+  val: 0_NOR=2020, 1_F&S=145, 2_SD=156, 3_MY=127, 4_AP=142, 5_BN=143, 6_UN=150, 7_IM=212
+  test: 0_NOR=2000, 1_F&S=150, 2_SD=150, 3_MY=150, 4_AP=150, 5_BN=150, 6_UN=150, 7_IM=200
+
+XGBoost configuration:
+  objective=multi:softprob, tree_method=hist, random_state=42, n_jobs=4
+  balanced inverse-frequency sample weights selected: False
+Hyperparameter search space: {"balanced_sample_weight": [false, true], "colsample_bytree": [0.8], "learning_rate": [0.1], "max_depth": [4], "min_child_weight": [1], "n_estimators": [50, 100], "subsample": [0.8]}
+Best hyperparameters: {"colsample_bytree": 0.8, "learning_rate": 0.1, "max_depth": 4, "min_child_weight": 1, "n_estimators": 100, "subsample": 0.8}
+
+Validation performance:
+  Accuracy: 0.9399
+  Macro F1: 0.8646
+  Weighted F1: 0.9379
+
+Final test performance:
+  Accuracy: 0.9065
+  Macro Precision: 0.8180
+  Macro Recall: 0.8679
+  Macro F1: 0.8399
+  Weighted F1: 0.9099
+  Inference time: 0.0511 seconds (0.0165 ms/image)
+
+Per-class test metrics:
+   class_id class_name  precision   recall  f1_score  support
+        0      0_NOR   0.978421 0.929500  0.953333     2000
+        1      1_F&S   0.778481 0.820000  0.798701      150
+        2       2_SD   0.672043 0.833333  0.744048      150
+        3       3_MY   0.637306 0.820000  0.717201      150
+        4       4_AP   0.746753 0.766667  0.756579      150
+        5       5_BN   0.944056 0.900000  0.921502      150
+        6       6_UN   0.807229 0.893333  0.848101      150
+        7       7_IM   0.980000 0.980000  0.980000      200
+
+Classification report:
+              precision    recall  f1-score   support
+
+       0_NOR     0.9784    0.9295    0.9533      2000
+       1_F&S     0.7785    0.8200    0.7987       150
+        2_SD     0.6720    0.8333    0.7440       150
+        3_MY     0.6373    0.8200    0.7172       150
+        4_AP     0.7468    0.7667    0.7566       150
+        5_BN     0.9441    0.9000    0.9215       150
+        6_UN     0.8072    0.8933    0.8481       150
+        7_IM     0.9800    0.9800    0.9800       200
+
+    accuracy                         0.9065      3100
+   macro avg     0.8180    0.8679    0.8399      3100
+weighted avg     0.9164    0.9065    0.9099      3100
+
+Confusion matrix rows are true classes and columns are predicted classes:
+  True 0_NOR   : 1859 3 45 45 26 0 22 0
+  True 1_F&S   : 2 123 13 10 0 1 1 0
+  True 2_SD    : 1 21 125 1 0 0 2 0
+  True 3_MY    : 13 5 1 123 5 1 2 0
+  True 4_AP    : 23 2 1 1 115 4 4 0
+  True 5_BN    : 0 0 0 6 4 135 1 4
+  True 6_UN    : 2 4 1 6 3 0 134 0
+  True 7_IM    : 0 0 0 1 1 2 0 196
+
+Comparison with SVM baseline:
+  SVM test accuracy=0.9116, macro F1=0.8494, weighted F1=0.9161
+  XGBoost deep-feature test accuracy=0.9065, macro F1=0.8399, weighted F1=0.9099
+  Deep features outperform handcrafted SVM on accuracy: False; on macro F1: False.
+  The lower-support defect classes remain the most sensitive to class imbalance; macro F1 is therefore emphasized.
+  A hybrid model remains necessary to investigate because this experiment evaluates deep features alone and does not establish whether complementary handcrafted information improves results.
+Total feature-loading/training experiment time: 626.574 seconds
+
+Feature importance note: importance values refer to EfficientNet deep-feature dimensions, not original image features.

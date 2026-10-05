@@ -1,0 +1,9 @@
+INFERENCE VALIDATION REPORT
+Total tested images: 10
+Successful predictions: 10
+Failed predictions: 0
+
+No feature parity discrepancies detected within tolerance.
+
+Columns:
+image_path,actual_class,predicted_class,confidence,handcrafted_dimension,deep_dimension,hybrid_dimension,probability_sum,inference_time_ms,status

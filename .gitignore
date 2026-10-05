@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Pytest
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large dataset & feature files
+datasets/
+data/raw/
+results/features/
+*.h5
+*.pkl
+*.model
+*.weights
+*.pt
+*.pth
+*.onnx
+*.db
+*.sqlite
+*.sqlite3
+
+# Ignore heavy generated CSVs over 1MB
+*.csv
+
+# Keep essential small CSV reports/summaries
+!reports/dataset_summary.csv
+!results/models/model_comparison_baseline.csv
+!results/models/model_comparison_final.csv
+!results/models/hybrid_xgboost/ablation_results.csv
+!results/models/hybrid_xgboost/hybrid_confusion_matrix.csv
+!results/models/hybrid_xgboost/hybrid_feature_group_importance.csv
+!results/models/hybrid_xgboost/hybrid_model_comparison.csv
+!results/models/hybrid_xgboost/hybrid_per_class_metrics.csv
+!results/models/hybrid_xgboost/shap_classwise_top_features.csv
+!results/models/hybrid_xgboost/shap_feature_group_importance.csv
+!results/models/hybrid_xgboost/shap_top20_features.csv
+
+# Large model artifacts
+*.joblib
+
+# Large binary / document files
+*.pdf
+*.pptx
+*.docx
+*.xlsx
+*.zip
+*.tar.gz
+*.rar
+
+# Images (large)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+

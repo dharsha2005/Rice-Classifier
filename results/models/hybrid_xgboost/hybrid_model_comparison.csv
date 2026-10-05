@@ -1,0 +1,4 @@
+model,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1
+SVM + handcrafted features,0.9116,0.8206,0.886,0.8494,0.9161
+EfficientNet-B0 features + XGBoost,0.9065,0.818,0.8679,0.8399,0.9099
+Hybrid handcrafted + EfficientNet-B0 + XGBoost,0.9209677419354839,0.8454377024416053,0.894,0.8660282229538041,0.9244098464642047

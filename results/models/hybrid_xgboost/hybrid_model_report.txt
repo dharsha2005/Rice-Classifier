@@ -1,0 +1,134 @@
+================================================================================
+  MAIN HYBRID FEATURE-FUSION MODEL EVALUATION REPORT
+  Project: Rice Quality and Defect Assessment using Hybrid ML & Deep Fusion
+  Date   : 2026-09-20 17:18:12
+================================================================================
+
+1. RESEARCH MOTIVATION
+  Experiment 1 (62 Handcrafted -> SVM) achieved 91.16% Test Accuracy and 0.8494 Macro F1.
+  Experiment 2 (1280 EfficientNet-B0 -> XGBoost) achieved 90.65% Test Accuracy and 0.8399 Macro F1.
+  The deep-feature model did NOT outperform the handcrafted baseline alone. This provides direct
+  empirical motivation for testing complementary feature fusion: combining handcrafted shape, texture,
+  and color representations with deep visual embeddings to evaluate if feature fusion boosts performance.
+
+2. HANDCRAFTED FEATURE DIMENSION
+  Total: 62 features (14 Shape, 12 GLCM Texture, 36 Colour [RGB/HSV/LAB]).
+
+3. EFFICIENTNET FEATURE DIMENSION
+  Total: 1280 deep features extracted from pre-trained EfficientNet-B0 backbone.
+
+4. FINAL HYBRID DIMENSION
+  Total Fused Vector: 1342 numerical features per image.
+
+5. DATASET DISTRIBUTION & ALIGNMENT
+  Splits (aligned strictly via image_path & metadata keys):
+    - Train      : 24,767 images
+    - Validation :  3,095 images
+    - Test       :  3,100 images
+
+6. PREPROCESSING & FEATURE SCALING
+  Scaling Method Fit on Train Data Only : StandardScaler
+  Leakage Guard: Any scaling transformations were fit strictly on train split and applied to val/test.
+
+7. XGBOOST CONFIGURATION
+  Objective: multi:softprob (8 classes), tree_method: hist, eval_metric: mlogloss, random_state: 42.
+
+8. HYPERPARAMETERS TESTED
+  - n_estimators           : [100]
+  - max_depth             : [4]
+  - learning_rate          : [0.1]
+  - scalers                : [StandardScaler]
+  - balanced_sample_weight : [False, True]
+
+9. BEST HYPERPARAMETERS (Selected by Validation Macro F1)
+  - Parameters             : {'n_estimators': 100, 'max_depth': 4, 'learning_rate': 0.1, 'subsample': 0.8, 'colsample_bytree': 0.8, 'min_child_weight': 1}
+  - Feature Scaler         : StandardScaler
+  - Balanced Sample Weights: False
+
+10. VALIDATION PERFORMANCE
+  - Accuracy   : 95.83%
+  - Macro F1   : 0.9071
+  - Weighted F1: 0.9577
+
+11. FINAL TEST PERFORMANCE (Untouched Test Split)
+  - Test Accuracy   : 92.10%
+  - Macro Precision : 84.54%
+  - Macro Recall    : 89.40%
+  - Macro F1        : 0.8660
+  - Weighted F1     : 0.9244
+  - Inference Latency: 0.0282 s total (0.0091 ms/image)
+
+12. PER-CLASS PERFORMANCE BREAKDOWN
+              precision    recall  f1-score   support
+
+       0_NOR     0.9858    0.9370    0.9608      2000
+       1_F&S     0.7824    0.8867    0.8313       150
+        2_SD     0.6703    0.8133    0.7349       150
+        3_MY     0.6440    0.8200    0.7214       150
+        4_AP     0.9343    0.8533    0.8920       150
+        5_BN     0.9653    0.9267    0.9456       150
+        6_UN     0.7966    0.9400    0.8624       150
+        7_IM     0.9848    0.9750    0.9799       200
+
+    accuracy                         0.9210      3100
+   macro avg     0.8454    0.8940    0.8660      3100
+weighted avg     0.9314    0.9210    0.9244      3100
+
+
+13. CLASS IMBALANCE ANALYSIS
+  - Unweighted Hybrid Best Val Macro F1 : 0.9071
+  - Weighted Hybrid Best Val Macro F1   : 0.9004
+  - Selection: Unweighted training achieved higher validation Macro F1 and was selected.
+
+14. FEATURE IMPORTANCE ANALYSIS (Model-Based)
+  Top 20 Individual Features:
+    01. deep_feature_484               [EfficientNet Deep] : 0.070459
+    02. deep_feature_314               [EfficientNet Deep] : 0.042193
+    03. deep_feature_262               [EfficientNet Deep] : 0.032810
+    04. deep_feature_574               [EfficientNet Deep] : 0.023720
+    05. shape_aspect_ratio             [Shape] : 0.020451
+    06. deep_feature_603               [EfficientNet Deep] : 0.014659
+    07. glcm_contrast_std              [GLCM Texture] : 0.013659
+    08. deep_feature_779               [EfficientNet Deep] : 0.009093
+    09. deep_feature_938               [EfficientNet Deep] : 0.009057
+    10. deep_feature_766               [EfficientNet Deep] : 0.008997
+    11. deep_feature_817               [EfficientNet Deep] : 0.008709
+    12. color_lab_b_mean               [Colour] : 0.008160
+    13. color_lab_a_mean               [Colour] : 0.007998
+    14. shape_height                   [Shape] : 0.007788
+    15. shape_eccentricity             [Shape] : 0.007682
+    16. deep_feature_1074              [EfficientNet Deep] : 0.007006
+    17. deep_feature_404               [EfficientNet Deep] : 0.006202
+    18. deep_feature_004               [EfficientNet Deep] : 0.006020
+    19. shape_major_axis_length        [Shape] : 0.005658
+    20. deep_feature_1212              [EfficientNet Deep] : 0.005559
+
+  Feature Domain Summary:
+    - EfficientNet Deep  (1280 features): Total Share = 85.50%, Mean = 0.000668, Top20 Count = 13
+    - Shape              (14 features): Total Share = 5.77%, Mean = 0.004123, Top20 Count = 4
+    - Colour             (36 features): Total Share = 5.46%, Mean = 0.001516, Top20 Count = 2
+    - GLCM Texture       (12 features): Total Share = 3.27%, Mean = 0.002723, Top20 Count = 1
+
+15. ABLATION STUDY & MODEL COMPARISON
+  ---------------------------------------------------------------------------
+  Experiment                     Features     Classifier    Accuracy   Macro F1   Weighted F1
+  ---------------------------------------------------------------------------
+  1. Handcrafted Baseline        62           RBF SVM       91.16%     0.8494     0.9161
+  2. EfficientNet Deep Baseline  1280         XGBoost       90.65%     0.8399     0.9099
+  3. Proposed Hybrid Model       1342         XGBoost       92.10%     0.8660     0.9244
+  ---------------------------------------------------------------------------
+
+16. RESEARCH INTERPRETATION
+  Did Hybrid Feature Fusion improve over Handcrafted SVM baseline? YES
+    - Accuracy Change : +0.94 percentage points
+    - Macro F1 Change : +1.6628
+  Did Hybrid Feature Fusion improve over Deep EfficientNet baseline? YES
+    - Accuracy Change : +1.45 percentage points
+    - Macro F1 Change : +2.6128
+
+17. LIMITATIONS
+  - Dimensionality: Concatenating 1280 deep features with 62 handcrafted features creates a high 1342-D space.
+  - Feature Redundancy: Deep embeddings may subsume certain texture/color signals, or noise in deep dimensions may obscure handcrafted features.
+
+18. RECOMMENDED NEXT EXPERIMENT
+  Feature fusion successfully improved overall quality and defect classification performance. Next step: explore explicit Feature Selection (e.g. Mutual Information / Lasso / Boruta) to prune redundant deep feature dimensions.

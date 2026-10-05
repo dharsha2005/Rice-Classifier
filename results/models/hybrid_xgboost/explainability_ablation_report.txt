@@ -1,0 +1,66 @@
+EXPLAINABILITY + CONTROLLED ABLATION REPORT
+
+Final frozen model verified: C:\Rice classifier final project\results\models\hybrid_xgboost\hybrid_xgboost_model.joblib
+SHAP used TreeExplainer on a reproducible 300-sample test explanation subset; it is not a tuning/evaluation split.
+
+Top 20 global mean |SHAP| features:
+                feature  mean_abs_shap
+           shape_height       0.188263
+       color_lab_b_mean       0.176319
+shape_major_axis_length       0.149833
+     shape_eccentricity       0.129490
+       deep_feature_766       0.108421
+             shape_area       0.099298
+       color_hsv_s_mean       0.095220
+       deep_feature_475       0.085699
+        color_lab_b_std       0.080689
+       deep_feature_203       0.072169
+       deep_feature_484       0.066697
+       deep_feature_262       0.060997
+       deep_feature_104       0.055180
+      glcm_contrast_std       0.053283
+       color_lab_a_mean       0.053235
+       deep_feature_574       0.048652
+     glcm_contrast_mean       0.043396
+     shape_aspect_ratio       0.042138
+       deep_feature_979       0.039227
+  glcm_homogeneity_mean       0.037686
+
+SHAP-based feature group contribution (distinct from XGBoost gain importance):
+      feature_group  feature_count  sum_mean_abs_shap  shap_contribution_percent
+Shape/Morphological             14           0.752179                  13.523729
+       GLCM Texture             12           0.279098                   5.018021
+             Colour             36           0.715490                  12.864086
+    EfficientNet-B0           1280           3.815151                  68.594164
+
+Ablation methodology: models were fit only on training data with StandardScaler fit on training data; validation metrics were descriptive and test was not used for selection. G reuses the existing frozen final model.
+
+                     configuration  feature_dimension  training_seconds  validation_accuracy  validation_macro_f1  test_accuracy  test_macro_precision  test_macro_recall  test_macro_f1  test_weighted_f1  test_inference_seconds  test_milliseconds_per_image
+                     A. Shape only                 14          0.726010             0.812601             0.560711       0.776129              0.567132           0.555833       0.556002          0.771458                0.003589                          NaN
+              B. GLCM Texture only                 12          0.630288             0.801939             0.556814       0.758387              0.550538           0.521854       0.524056          0.751168                0.004525                          NaN
+                    C. Colour only                 36          1.094229             0.865267             0.711335       0.855806              0.743508           0.712313       0.723742          0.851614                0.004494                          NaN
+                D. All handcrafted                 62          2.248675             0.937318             0.857960       0.911613              0.825848           0.877542       0.847936          0.915068                0.004275                          NaN
+              E. EfficientNet only               1280        170.226144             0.939580             0.863005       0.906452              0.818715           0.868625       0.841260          0.909822                0.035487                          NaN
+     F. Handcrafted + EfficientNet               1342        173.104240             0.957027             0.903796       0.924839              0.851487           0.901833       0.873488          0.927738                0.035610                          NaN
+G. Full Hybrid model (saved final)               1342        129.192577             0.958320             0.907134       0.920968              0.845438           0.894000       0.866028          0.924410                0.028199                     0.009097
+
+Individual explanations saved for 3 representative samples.
+Limitations: SHAP describes model associations/contributions on the explanation subset; it does not establish causal effects. Deep embedding dimensions are latent features.
+
+Reproducibility:
+{
+  "random_state": 42,
+  "shap_subset_size": 300,
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "xgboost": "3.1.3",
+  "shap": "0.50.0",
+  "numpy": "2.4.1",
+  "scikit_learn": "1.8.0",
+  "feature_dimension": 1342,
+  "sample_counts": {
+    "train": 24767,
+    "val": 3095,
+    "test": 3100
+  },
+  "total_execution_seconds": 357.2535434999736
+}

@@ -1,0 +1,15 @@
+{
+  "random_state": 42,
+  "sample_counts": {
+    "train": 24767,
+    "val": 3095,
+    "test": 3100
+  },
+  "feature_dimension": 1342,
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "numpy": "2.5.3",
+  "pandas": "3.0.5",
+  "tuning_fit_seconds": 255.98271930002375,
+  "final_fit_seconds": 129.19257690000813
+}

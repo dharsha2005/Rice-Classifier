@@ -1,0 +1,5 @@
+feature_group,feature_count,total_importance,relative_importance_percent,mean_importance,top20_count
+EfficientNet Deep,1280,0.8550236,85.502365,0.0006679872,13
+Shape,14,0.057722438,5.772244,0.004123031,4
+Colour,36,0.054576572,5.4576573,0.0015160159,2
+GLCM Texture,12,0.03267732,3.267732,0.00272311,1

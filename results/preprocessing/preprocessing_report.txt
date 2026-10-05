@@ -1,0 +1,73 @@
+============================================================================
+  RICE IMAGE PREPROCESSING & GRAIN SEGMENTATION REPORT
+  Project   : Rice Quality and Defect Assessment using Hybrid ML & Feature Fusion
+  Generated : 2026-09-15 13:43:29
+============================================================================
+
+1. EXECUTIVE SUMMARY
+  - Total Images Processed       : 20
+  - Successful Segmentations     : 20 (100.0%)
+  - Failed Segmentations         : 0 (0.0%)
+  - Average Processing Time      : 5.44 ms / image
+
+2. IMAGE DIMENSIONS & RESOLUTION TRANSFORMATION
+  - Original Dimensions (Min)    : 206 x 135 px
+  - Original Dimensions (Max)    : 328 x 301 px
+  - Original Dimensions (Mean)   : 261.5 x 222.2 px
+  - Standardized Output Size     : 224 x 224 px (3 Channels, RGB/BGR)
+  - Aspect Ratio Handling        : Preserved with isotropic scaling and centered background padding
+
+3. SEGMENTATION & PREPROCESSING METHODOLOGY
+  - Color Space Conversions      : RGB, Grayscale, HSV, LAB (computed & available for feature extraction)
+  - Noise Reduction              : Gaussian Blur (Kernel: (5, 5), sigma=0) for boundary-preserving smoothing
+  - Foreground Separation        : Automatic Otsu Thresholding on denoised grayscale channel
+  - Morphological Operations     : Elliptical Structuring Element (Kernel: (5, 5))
+                                   * cv2.MORPH_CLOSE to bridge chalky/diseased internal grain voids
+                                   * cv2.MORPH_OPEN to eliminate tiny stray dust particles
+  - Contour Extraction           : cv2.findContours with cv2.RETR_EXTERNAL
+  - Grain Region Isolation       : Largest connected contour filter with filled binary mask generation
+  - Standardized Cropping        : Bounding box crop with 5% margin, padded to 224x224
+
+4. GRAIN MORPHOLOGY SUMMARY (PROCESSED SAMPLES)
+  - Grain Area (Min)             : 5,726 px
+  - Grain Area (Max)             : 22,145 px
+  - Grain Area (Mean)            : 15,295 px
+
+5. PROCESSED SAMPLES BREAKDOWN
+  #   Class ID  Class Name   Original (WxH)   Grain BBox     Area (px)    Status    
+  --- --------- ------------ ---------------- -------------- ------------ ----------
+  1   0         0_NOR        262x217          119x197        17,438       SUCCESS   
+  2   0         0_NOR        276x213          116x193        16,080       SUCCESS   
+  3   0         0_NOR        262x216          111x197        17,026       SUCCESS   
+  4   1         1_F&S        260x251          103x221        17,272       SUCCESS   
+  5   1         1_F&S        242x248          88x215         14,702       SUCCESS   
+  6   1         1_F&S        260x281          104x255        18,776       SUCCESS   
+  7   2         2_SD         328x227          139x214        19,151       SUCCESS   
+  8   2         2_SD         230x286          91x261         17,555       SUCCESS   
+  9   2         2_SD         278x296          112x270        22,145       SUCCESS   
+  10  3         3_MY         280x232          112x209        17,904       SUCCESS   
+  11  3         3_MY         264x301          105x277        22,006       SUCCESS   
+  12  3         3_MY         262x200          105x175        11,831       SUCCESS   
+  13  4         4_AP         280x232          114x208        17,828       SUCCESS   
+  14  4         4_AP         206x195          91x182         11,445       SUCCESS   
+  15  5         5_BN         226x135          77x112         5,726        SUCCESS   
+  16  5         5_BN         288x162          121x137        10,216       SUCCESS   
+  17  6         6_UN         254x217          97x191         13,131       SUCCESS   
+  18  6         6_UN         248x227          100x213        15,607       SUCCESS   
+  19  7         7_IM         224x136          89x114         7,536        SUCCESS   
+  20  7         7_IM         300x171          128x148        12,526       SUCCESS   
+
+6. ISSUES & ANOMALIES DETECTED
+  - None: 100% of the sample rice grains were successfully detected, cleanly segmented from background,
+    and standardized to 224x224 resolution without artifacts.
+
+7. INTEGRATION READINESS
+  - Ready for Stage 3 Feature Extraction:
+    * Shape Features: Morphological contour, area, perimeter, circularity, aspect ratio, extent, solidity.
+    * Texture Features: GLCM (contrast, dissimilarity, homogeneity, energy, correlation, ASM).
+    * Colour Features: Mean/Std/Skewness in RGB, HSV, and LAB colour spaces.
+    * Deep Features: Standardized 224x224 RGB grain images for EfficientNet-B0 backbone.
+
+============================================================================
+  END OF REPORT
+============================================================================

@@ -1,0 +1,23 @@
+{
+  "acceptance_threshold": 0.55,
+  "feature_dim": 1280,
+  "rice_dir": "C:\\Rice classifier final project\\datasets\\rice_gate\\rice",
+  "non_rice_dir": "C:\\Rice classifier final project\\datasets\\rice_gate\\non_rice",
+  "train_images": 110,
+  "val_images": 20,
+  "test_images": 24,
+  "val_metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0
+  },
+  "test_metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0
+  }
+}
