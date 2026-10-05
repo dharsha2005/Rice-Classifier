@@ -62,9 +62,9 @@ def detect_and_crop_grains(
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # Invert if background is bright (rice grains should be white foreground)
-    # Check border pixels to infer background brightness
-    border_mean = np.mean([thresh[0, :], thresh[-1, :], thresh[:, 0], thresh[:, -1]])
-    if border_mean > 127:
+    # Check border pixels to infer background brightness safely without inhomogeneous array shape errors
+    border_pixels = np.concatenate([thresh[0, :], thresh[-1, :], thresh[:, 0], thresh[:, -1]])
+    if float(np.mean(border_pixels)) > 127.0:
         thresh = cv2.bitwise_not(thresh)
 
     # Morphological opening to break tiny bridges between touching grains
