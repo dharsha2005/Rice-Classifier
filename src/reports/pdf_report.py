@@ -1,12 +1,24 @@
 from __future__ import annotations
 
 from io import BytesIO
-from typing import Iterable, Mapping
+from typing import Any, Iterable, Mapping, Optional
+
+
+def _action_label(code: object) -> str:
+    from src.quality.config import ACTION_DISPLAY_NAMES
+
+    if code is None or str(code).strip() == "":
+        return ""
+    text = str(code)
+    return ACTION_DISPLAY_NAMES.get(text, text.replace("_", " ").title())
 
 
 def build_prediction_pdf(
     history: Iterable[Mapping[str, object]],
     review_log: Iterable[Mapping[str, object]] = (),
+    batch_quality: Optional[Mapping[str, Any]] = None,
+    batch_operator_action: Optional[str] = None,
+    batch_operator_notes: Optional[str] = None,
 ) -> bytes:
     """Build a compact audit report from prediction and manual-review records."""
     try:
@@ -36,6 +48,12 @@ def build_prediction_pdf(
         Spacer(1, 0.2 * inch),
         Paragraph(f"Total predictions: {len(history_rows)}", styles["Normal"]),
         Paragraph(f"Manual corrections: {len(review_rows)}", styles["Normal"]),
+        Paragraph(
+            "Model Prediction, Recommended Action, and Human Final Decision are recorded as separate fields. "
+            "Recommended actions use configurable operational / decision-support thresholds and are not "
+            "validated food-safety limits. Model probability is an uncalibrated model probability.",
+            styles["Normal"],
+        ),
         Spacer(1, 0.15 * inch),
     ]
 
@@ -47,8 +65,8 @@ def build_prediction_pdf(
                 str(item.get("image_name", ""))[:28],
                 str(item.get("source", "")),
                 str(item.get("predicted_class", "")),
-                f"{float(item.get('confidence', 0.0)) * 100:.2f}%",
-                "Yes" if item.get("needs_review", False) else "No",
+                f"{float(item.get('confidence', item.get('model_probability', 0.0))) * 100:.2f}%",
+                "Yes" if item.get("needs_review", item.get("review_required", False)) else "No",
             ]
         )
 
@@ -69,6 +87,71 @@ def build_prediction_pdf(
         )
     )
     story.extend([Paragraph("Prediction History", styles["Heading2"]), prediction_table])
+
+    quality_data = [["Image", "Model Prediction", "Model Probability", "Review", "Recommended Action", "Human Final Decision", "Operator Notes"]]
+    for item in history_rows:
+        quality_data.append(
+            [
+                str(item.get("image_name", ""))[:22],
+                str(item.get("predicted_class", "")),
+                f"{float(item.get('model_probability', item.get('confidence', 0.0))) * 100:.2f}%",
+                "Yes" if item.get("review_required", item.get("needs_review", False)) else "No",
+                _action_label(item.get("recommended_action")),
+                str(item.get("operator_action") or ""),
+                str(item.get("operator_notes") or "")[:40],
+            ]
+        )
+    if len(quality_data) == 1:
+        quality_data.append(["No quality-action records", "", "", "", "", "", ""])
+
+    quality_table = Table(
+        quality_data,
+        repeatRows=1,
+        colWidths=[1.05 * inch, 0.85 * inch, 0.85 * inch, 0.5 * inch, 1.2 * inch, 1.05 * inch, 1.3 * inch],
+    )
+    quality_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#075b5d")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#e8f4f0")]),
+            ]
+        )
+    )
+    story.extend(
+        [
+            Spacer(1, 0.2 * inch),
+            Paragraph("Quality Action Recommendation", styles["Heading2"]),
+            Paragraph(
+                "Recommended Action is a rule-based operator aid. It is not a food-safety determination.",
+                styles["Normal"],
+            ),
+            quality_table,
+        ]
+    )
+
+    if batch_quality:
+        story.extend(
+            [
+                Spacer(1, 0.2 * inch),
+                Paragraph("Batch Quality Review", styles["Heading2"]),
+                Paragraph(f"Total samples: {batch_quality.get('total_samples', '')}", styles["Normal"]),
+                Paragraph(f"Normal-class count: {batch_quality.get('normal_count', '')}", styles["Normal"]),
+                Paragraph(f"Defect-class count: {batch_quality.get('defect_count', '')}", styles["Normal"]),
+                Paragraph(f"Batch defect rate: {float(batch_quality.get('defect_rate', 0.0)) * 100:.2f}%", styles["Normal"]),
+                Paragraph(f"Review-required count: {batch_quality.get('review_required_count', '')}", styles["Normal"]),
+                Paragraph(
+                    f"Recommended Action: {_action_label(batch_quality.get('recommended_action') or batch_quality.get('recommended_action_label'))}",
+                    styles["Normal"],
+                ),
+                Paragraph(f"Human Final Decision: {batch_operator_action or 'Not recorded'}", styles["Normal"]),
+                Paragraph(f"Operator notes: {batch_operator_notes or ''}", styles["Normal"]),
+                Paragraph(str(batch_quality.get("threshold_note", "")), styles["Normal"]),
+            ]
+        )
 
     if review_rows:
         story.append(Spacer(1, 0.2 * inch))

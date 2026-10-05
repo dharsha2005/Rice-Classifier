@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,8 +20,10 @@ from src.inference.rice_gate import gate_model_available
 from src.inference.saliency import generate_activation_heatmap
 from src.realtime.alerts import class_guidance, quality_alert
 from src.reports.pdf_report import build_prediction_pdf
+from src.quality.config import OPERATOR_DECISION_OPTIONS
+from src.quality.recommendations import calculate_batch_quality, get_quality_action
 from src.storage.database import DATABASE_PATH
-from ui.state import LABELS, ROOT, image_id, record_prediction, save_correction
+from ui.state import LABELS, ROOT, image_id, record_prediction, save_correction, save_operator_decision
 from ui.style import page_heading, render_hero
 
 
@@ -30,15 +33,79 @@ def _probability_table(result: dict[str, Any]) -> pd.DataFrame:
     ).sort_values("Probability", ascending=False)
 
 
-def render_result(result: dict[str, Any], image: Image.Image, key_prefix: str, show_explain: bool = True) -> None:
+def _quality_card_class(action_code: str) -> str:
+    mapping = {
+        "CONTINUE_PROCESSING": "",
+        "SEPARATE_AND_INSPECT": "inspect",
+        "MANUAL_INSPECTION": "manual",
+        "RE_SCREEN_REPROCESS": "reprocess",
+        "ADDITIONAL_SCREENING": "inspect",
+        "DISPOSAL_ALTERNATE_USE": "human",
+    }
+    return mapping.get(action_code, "")
+
+
+def render_quality_recommendation(predicted_class: str, model_probability: float) -> dict[str, Any]:
+    action = get_quality_action(predicted_class, model_probability)
+    css = _quality_card_class(action["recommended_action"])
+    st.markdown("#### Quality Action Recommendation")
+    st.markdown(
+        f"""
+        <div class="qa-card {css}">
+            <div class="qa-kicker">Decision-support recommendation</div>
+            <div class="qa-action">Recommended Action: {action["recommended_action_label"]}</div>
+            <p><strong>Predicted Class:</strong> {action["predicted_class"]}<br/>
+            <strong>Model Probability:</strong> {action["model_probability"]:.2%} (uncalibrated)<br/>
+            <strong>Classification Status:</strong> {action["classification_status"]}</p>
+            <p><strong>Reason:</strong> {action["reason"]}<br/>
+            <strong>Next Step:</strong> {action["next_step"]}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.caption(action["threshold_note"])
+    return action
+
+
+def render_operator_decision(prediction_id: int | None, key_prefix: str) -> None:
+    st.markdown("#### Human Decision")
+    st.caption("Operator decisions are stored separately from the ML prediction and never overwrite it.")
+    labels = [label for _, label in OPERATOR_DECISION_OPTIONS]
+    codes = {label: code for code, label in OPERATOR_DECISION_OPTIONS}
+    choice = st.selectbox("Operator Decision", labels, key=f"operator_choice_{key_prefix}")
+    notes = st.text_area("Notes", key=f"operator_notes_{key_prefix}", placeholder="Optional inspection notes")
+    if choice in {"Disposal", "Alternate Use"}:
+        st.warning(
+            "Final Action: Disposal / Alternate Use is available only after manual quality inspection. "
+            "This is a human confirmation, not an ML determination. "
+            "Final disposition should follow applicable quality-control procedures."
+        )
+    if st.button("Save Decision", type="primary", key=f"operator_save_{key_prefix}"):
+        if prediction_id is None:
+            st.error("No saved prediction id is available for this sample.")
+            return
+        save_operator_decision(int(prediction_id), codes[choice], notes or "")
+        st.success("Operator decision saved. The original ML prediction was left unchanged.")
+
+
+def render_result(
+    result: dict[str, Any],
+    image: Image.Image,
+    key_prefix: str,
+    show_explain: bool = True,
+    prediction_id: int | None = None,  # kept for call-site compatibility; operator form is rendered separately
+) -> None:
+    _ = prediction_id
     label = result["predicted_class"]
     confidence = result["confidence"]
+    action = get_quality_action(label, confidence)
     cards = st.columns(3)
     cards[0].metric("Predicted class", label)
     cards[1].metric("Model probability", f"{confidence:.2%}")
-    cards[2].metric("Review status", "Review" if confidence < 0.75 else "Ready")
+    cards[2].metric("Review status", "Review" if action["review_required"] else "Ready")
     st.warning(quality_alert(confidence, label))
     st.info(class_guidance(label))
+    render_quality_recommendation(label, confidence)
     probability_df = _probability_table(result)
     st.dataframe(probability_df, width="stretch", hide_index=True)
     st.bar_chart(probability_df.set_index("Class")["Probability"])
@@ -116,7 +183,12 @@ def analyze_rice() -> None:
 
     if st.session_state.single_result is not None:
         st.markdown("#### Prediction result")
-        render_result(st.session_state.single_result, image, "analyze_page")
+        render_result(
+            st.session_state.single_result,
+            image,
+            "analyze_page",
+            prediction_id=st.session_state.get("last_prediction_id"),
+        )
 
         if st.session_state.explanation is not None:
             explanation = st.session_state.explanation
@@ -164,6 +236,8 @@ def analyze_rice() -> None:
             with right_col:
                 st.error("Negative factors (opposing prediction)")
                 st.dataframe(n_df, width="stretch", hide_index=True)
+
+        render_operator_decision(st.session_state.get("last_prediction_id"), "analyze_page")
 
 
 def multi_grain_page() -> None:
@@ -239,19 +313,99 @@ def batch_analysis() -> None:
         for index, item in enumerate(files, start=1):
             try:
                 result = predict_rice(Image.open(item).convert("RGB"))
-                record_prediction(result, item.name, "batch")
-                results.append({"Image": item.name, "Predicted Class": result["predicted_class"], "Confidence": round(result["confidence"] * 100, 2), "Needs Review": result["confidence"] < 0.75})
+                saved = record_prediction(result, item.name, "batch")
+                action = get_quality_action(result["predicted_class"], result["confidence"])
+                results.append(
+                    {
+                        "Image": item.name,
+                        "Predicted Class": result["predicted_class"],
+                        "Confidence": round(result["confidence"] * 100, 2),
+                        "Needs Review": action["review_required"],
+                        "Recommended Action": action["recommended_action_label"],
+                        "prediction_id": saved["id"],
+                    }
+                )
             except Exception as exc:
                 st.warning(f"Could not classify {item.name}: {exc}")
-                results.append({"Image": item.name, "Predicted Class": "ERROR", "Confidence": 0.0, "Needs Review": True})
+                results.append(
+                    {
+                        "Image": item.name,
+                        "Predicted Class": "ERROR",
+                        "Confidence": 0.0,
+                        "Needs Review": True,
+                        "Recommended Action": "Manual Inspection",
+                        "prediction_id": None,
+                    }
+                )
             progress.progress(index / len(files))
         st.session_state.batch_results = results
+        st.session_state.batch_quality = calculate_batch_quality(results)
     if st.session_state.batch_results:
         result_df = pd.DataFrame(st.session_state.batch_results)
-        st.dataframe(result_df, width="stretch", hide_index=True)
-        st.metric("Images needing review", int(result_df["Needs Review"].sum()))
-        st.download_button("Download batch CSV", result_df.to_csv(index=False).encode(), "rice_batch_results.csv", "text/csv", key="batch_page_csv")
-        st.bar_chart(result_df.set_index("Image")["Confidence"])
+        display_df = result_df.drop(columns=["prediction_id"], errors="ignore")
+        st.dataframe(display_df, width="stretch", hide_index=True)
+        st.metric("Images needing review", int(display_df["Needs Review"].sum()) if "Needs Review" in display_df else 0)
+        quality = st.session_state.batch_quality or calculate_batch_quality(st.session_state.batch_results)
+        _render_batch_quality_review(quality)
+        st.download_button("Download batch CSV", display_df.to_csv(index=False).encode(), "rice_batch_results.csv", "text/csv", key="batch_page_csv")
+        if "Confidence" in display_df.columns:
+            st.bar_chart(display_df.set_index("Image")["Confidence"])
+
+
+def _render_batch_quality_review(quality: dict[str, Any]) -> None:
+    st.markdown("#### Batch Quality Review")
+    kpis = st.columns(5)
+    kpis[0].metric("Total samples", quality["total_samples"])
+    kpis[1].metric("Normal (0_NOR)", quality["normal_count"])
+    kpis[2].metric("Defect-class count", quality["defect_count"])
+    kpis[3].metric("Defect rate", f"{quality['defect_rate']:.1%}")
+    kpis[4].metric("Review required", quality["review_required_count"])
+    css = _quality_card_class(quality["recommended_action"])
+    st.markdown(
+        f"""
+        <div class="qa-card {css}">
+            <div class="qa-kicker">Configurable operational thresholds</div>
+            <div class="qa-action">Recommended Action: {quality["recommended_action_label"]}</div>
+            <p>{quality["reason"]}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.caption(quality["threshold_note"])
+    distribution = quality.get("class_distribution") or {}
+    if distribution:
+        dist_df = pd.DataFrame(
+            [{"Class": label, "Count": count} for label, count in sorted(distribution.items())]
+        )
+        st.bar_chart(dist_df.set_index("Class")["Count"])
+    st.markdown("#### Batch Human Decision")
+    st.caption("Batch operator decisions are recorded separately from individual ML predictions.")
+    labels = [label for _, label in OPERATOR_DECISION_OPTIONS]
+    codes = {label: code for code, label in OPERATOR_DECISION_OPTIONS}
+    choice = st.selectbox("Operator Decision", labels, key="batch_operator_choice")
+    notes = st.text_area("Notes", key="batch_operator_notes")
+    if choice in {"Disposal", "Alternate Use"}:
+        st.warning(
+            "Final Action: Disposal / Alternate Use is available only after manual quality inspection. "
+            "The ML model does not mark rice as unsafe."
+        )
+    if st.button("Save Batch Decision", type="primary", key="batch_operator_save"):
+        st.session_state.store.save_batch_review(
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "total_samples": quality["total_samples"],
+                "normal_count": quality["normal_count"],
+                "defect_count": quality["defect_count"],
+                "defect_rate": quality["defect_rate"],
+                "review_required_count": quality["review_required_count"],
+                "recommended_action": quality["recommended_action"],
+                "operator_action": codes[choice],
+                "operator_notes": notes or "",
+            }
+        )
+        st.session_state.batch_operator_action = codes[choice]
+        st.session_state.batch_operator_notes = notes or ""
+        st.success("Batch operator decision saved. Individual ML predictions were not changed.")
 
 
 def prediction_history() -> None:
@@ -288,6 +442,7 @@ def shap_page() -> None:
     if explanation is None:
         st.info("Run an analysis and choose Explain Prediction on the Analyze Rice page first.")
     else:
+        st.caption("SHAP explains why the model made this prediction. It does not decide edible, unsafe, disposal, or reprocessing.")
         st.markdown("#### Local explanation")
         st.caption("Positive contribution supports the prediction; negative contribution opposes it.")
         positive = pd.DataFrame(
@@ -350,7 +505,13 @@ def reports() -> None:
         review_df = pd.DataFrame(st.session_state.review_log)
         st.download_button("Download review corrections CSV", review_df.to_csv(index=False).encode(), "rice_review_corrections.csv", "text/csv", key="reports_review_csv")
     try:
-        pdf = build_prediction_pdf(history, st.session_state.review_log)
+        pdf = build_prediction_pdf(
+            history,
+            st.session_state.review_log,
+            batch_quality=st.session_state.get("batch_quality"),
+            batch_operator_action=st.session_state.get("batch_operator_action"),
+            batch_operator_notes=st.session_state.get("batch_operator_notes"),
+        )
         st.download_button("Download complete PDF report", pdf, "rice_quality_report.pdf", "application/pdf", key="reports_pdf")
     except RuntimeError as exc:
         st.warning(str(exc))
@@ -384,14 +545,23 @@ def webcam() -> None:
     else:
         st.success(f"✅ Rice grain detected (Rice confidence: {gate.rice_probability:.1%}). Ready for grading.")
         st.image(image, caption="Accepted rice capture", width="stretch")
+        current_id = image_id(camera.getvalue(), "camera")
+        if st.session_state.webcam_input_id != current_id:
+            st.session_state.webcam_result = None
+            st.session_state.webcam_input_id = current_id
         if st.button("Analyze Camera Rice", type="primary", key="webcam_analyze"):
             try:
                 result = predict_rice(image)
-                record_prediction(result, "camera_capture.jpg", "camera")
+                saved = record_prediction(result, "camera_capture.jpg", "camera")
                 st.session_state.explanation = None
-                render_result(result, image, "webcam")
+                st.session_state.webcam_result = result
+                st.session_state.last_prediction_id = saved["id"]
             except Exception as exc:
+                st.session_state.webcam_result = None
                 st.error(f"Analysis failed: {exc}")
+        if st.session_state.webcam_result is not None:
+            render_result(st.session_state.webcam_result, image, "webcam", prediction_id=st.session_state.get("last_prediction_id"))
+            render_operator_decision(st.session_state.get("last_prediction_id"), "webcam")
 
 
 
@@ -451,6 +621,6 @@ def about_project() -> None:
     **Industrial Capabilities**  
     - **Single Grain Inspection:** Fine-grained 8-class defect diagnostics.
     - **Multi-Grain Bulk Inspection:** Simultaneous kernel segmentation, defect mapping, and Codex/ISO commercial grading (Grade 1 Premium, Grade 2 Standard, Grade 3 Fair, Off-Grade).
-    - **Audit & Review Workflow:** Low-confidence (<75%) predictions automatically enter a human-in-the-loop review queue stored in SQLite.
+    - **Audit & Review Workflow:** Low-probability predictions can enter a human-in-the-loop review queue stored in SQLite. A separate rule-based Quality Action Recommendation layer then suggests Continue Processing, Separate & Inspect, or Manual Inspection. Disposal / alternate use requires human confirmation.
     - **Headless REST API:** Full FastAPI backend for conveyor belt and automated sorter integration.
     """)

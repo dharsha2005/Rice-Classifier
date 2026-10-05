@@ -64,8 +64,12 @@ class TestApi(unittest.TestCase):
         data = response.json()
         self.assertIn("predicted_class", data)
         self.assertIn("confidence", data)
+        self.assertIn("probability", data)
         self.assertIn("probabilities", data)
+        self.assertIn("review_required", data)
+        self.assertIn("recommended_action", data)
         self.assertEqual(data["feature_count"], 1342)
+        self.assertEqual(data["probability"], data["confidence"])
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from src.inference.multi_grain import inspect_bulk_rice
 from src.inference.predict import explain_prediction, predict_rice
 from src.inference.rice_gate import gate_model_available, validate_rice_or_reject
 from src.inference.saliency import generate_activation_heatmap
+from src.quality.recommendations import attach_quality_recommendation, calculate_batch_quality
 
 app = FastAPI(
     title="Rice Quality & Defect Assessment API",
@@ -80,11 +81,15 @@ async def predict(
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Prediction could not be completed: {exc}") from exc
 
+    quality = attach_quality_recommendation(result)
     return {
         "filename": file.filename or "uploaded_image",
-        "predicted_class": result["predicted_class"],
-        "confidence": result["confidence"],
+        "predicted_class": quality["predicted_class"],
+        "confidence": quality["confidence"],
+        "probability": quality["model_probability"],
         "probabilities": result["probabilities"],
+        "review_required": quality["review_required"],
+        "recommended_action": quality["recommended_action"],
         "feature_count": result["feature_count"],
         "model": "Hybrid EfficientNet-B0 + XGBoost (1,342 features)",
         "gate_status": gate_info,
@@ -109,10 +114,14 @@ async def predict_batch(
             content = await f.read()
             img = _read_and_validate_image(f, content)
             res = predict_rice(img)
+            quality = attach_quality_recommendation(res)
             batch_results.append({
                 "filename": f.filename or "unknown",
-                "predicted_class": res["predicted_class"],
-                "confidence": res["confidence"],
+                "predicted_class": quality["predicted_class"],
+                "confidence": quality["confidence"],
+                "probability": quality["model_probability"],
+                "review_required": quality["review_required"],
+                "recommended_action": quality["recommended_action"],
                 "status": "success",
             })
         except Exception as exc:
@@ -120,12 +129,16 @@ async def predict_batch(
                 "filename": f.filename or "unknown",
                 "predicted_class": "ERROR",
                 "confidence": 0.0,
+                "probability": 0.0,
+                "review_required": True,
+                "recommended_action": "MANUAL_INSPECTION",
                 "status": f"failed: {exc}",
             })
 
     return {
         "total_processed": len(batch_results),
         "results": batch_results,
+        "batch_quality": calculate_batch_quality(batch_results),
     }
 
 

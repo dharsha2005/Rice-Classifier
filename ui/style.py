@@ -34,6 +34,13 @@ def apply_theme() -> None:
         .status-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; background:#36a269; }
         .status-dot.warn { background:#e7a84b; }
         .surface { background:rgba(255,255,255,.72); border:1px solid var(--line); border-radius:14px; padding:1rem 1.1rem; }
+        .qa-card { border:1px solid var(--line); border-left:6px solid var(--teal); border-radius:12px; padding:1rem 1.15rem; background:rgba(255,255,255,.86); margin:.4rem 0 1rem; }
+        .qa-card.inspect { border-left-color:#c47b3b; }
+        .qa-card.manual { border-left-color:#d4a017; }
+        .qa-card.reprocess { border-left-color:var(--coral); }
+        .qa-card.human { border-left-color:#7f1d1d; }
+        .qa-kicker { color:var(--teal); font:700 .72rem 'Space Grotesk',sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+        .qa-action { font:700 1.15rem 'Space Grotesk',sans-serif; margin:.2rem 0 .45rem; }
         </style>
         """,
         unsafe_allow_html=True,
